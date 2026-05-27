@@ -1,5 +1,7 @@
+import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
+from dotenv import load_dotenv
 
 def query_model(model_id, prompts, hf_token=None):
     print(f"\n========================================")
@@ -8,7 +10,7 @@ def query_model(model_id, prompts, hf_token=None):
     
     # Load tokenizer
     tokenizer = AutoTokenizer.from_pretrained(model_id, token=hf_token)
-    
+
     # Load model (using float16 and device_map="auto" to handle VRAM automatically)
     model = AutoModelForCausalLM.from_pretrained(
         model_id, 
@@ -59,7 +61,9 @@ def query_model(model_id, prompts, hf_token=None):
         torch.cuda.empty_cache()
 
 if __name__ == "__main__":
-    # Replace this string with your actual Hugging Face token
+    # Load environment variables from .env file
+    load_dotenv()
+    my_hf_token = os.getenv("HF_TOKEN")
     
     # A diverse set of prompts to test reasoning, instruction following, and constraints
     test_prompts = [
@@ -67,10 +71,10 @@ if __name__ == "__main__":
         "A farmer has 17 sheep. All but 9 run away. How many sheep are left? Explain your reasoning briefly.",
         
         # 2. Strict Instruction Following (Formatting constraint)
-        "List three benefits of regular exercise. Format your response strictly as a valid JSON array of strings. Do not include any explanations, markdown formatting like ```json, or other text.",
+        # "List three benefits of regular exercise. Format your response strictly as a valid JSON array of strings. Do not include any explanations, markdown formatting like ```json, or other text.",
         
         # 3. Coding with Constraints
-        "Write a Python function to check if a string is a palindrome. You must NOT use string slicing (e.g. s[::-1]) or the built-in reversed() function."
+        # "Write a Python function to check if a string is a palindrome. You must NOT use string slicing (e.g. s[::-1]) or the built-in reversed() function."
     ]
     
     models_to_test = [
