@@ -1,0 +1,11 @@
+model_id,tokenizer_type,vocab_size,special_tokens,word_boundary_strategy,byte_fallback_or_byte_level,avg_tokens_per_english_word,avg_tokens_per_hebrew_word
+meta-llama/Llama-3.1-8B-Instruct,sBackend,128000,2,Ġ (Byte-Level Space),Byte-Level (BBPE),1.08,4.97
+mistralai/Mistral-7B-Instruct-v0.3,sBackend,32768,3,Raw/Prefix,Byte-Fallback,1.16,5.22
+Qwen/Qwen2.5-7B-Instruct,Qwen2,151643,14,Ġ (Byte-Level Space),Byte-Level (BBPE),1.08,1.73
+allenai/OLMo-2-1124-7B-Instruct,sBackend,100278,2,Ġ (Byte-Level Space),Byte-Level (BBPE),1.08,4.97
+ibm-granite/granite-3.3-8b-instruct,GPT2,49152,1,Ġ (Byte-Level Space),Byte-Level (BBPE),1.2,4.5
+deepseek-ai/DeepSeek-V3,sBackend,128000,2,Ġ (Byte-Level Space),Byte-Level (BBPE),1.08,2.3
+HuggingFaceTB/SmolLM2-1.7B-Instruct,sBackend,49152,3,Ġ (Byte-Level Space),Byte-Level (BBPE),1.12,5.65
+microsoft/Phi-4-mini-instruct,sBackend,200019,1,Ġ (Byte-Level Space),Byte-Level (BBPE),1.08,1.75
+tiiuae/Falcon3-7B-Instruct,sBackend,131072,2,Ġ (Byte-Level Space),Byte-Level (BBPE),1.12,4.38
+dicta-il/dictalm2.0-instruct,sBackend,33152,3,Raw/Prefix,ּByte-Fallback,1.16,2.23

@@ -1,0 +1,58 @@
+{
+    "vocab_size": 49152,
+    "max_position_embeddings": 8192,
+    "hidden_size": 2048,
+    "intermediate_size": 8192,
+    "num_hidden_layers": 24,
+    "num_attention_heads": 32,
+    "num_key_value_heads": 32,
+    "hidden_act": "silu",
+    "initializer_range": 0.02,
+    "rms_norm_eps": 1e-05,
+    "pretraining_tp": 1,
+    "use_cache": true,
+    "attention_bias": false,
+    "attention_dropout": 0.0,
+    "mlp_bias": false,
+    "head_dim": 64,
+    "rope_parameters": {
+        "rope_theta": 130000,
+        "rope_type": "default"
+    },
+    "tie_word_embeddings": true,
+    "pad_token_id": 2,
+    "bos_token_id": 1,
+    "eos_token_id": 2,
+    "return_dict": true,
+    "output_hidden_states": false,
+    "dtype": "bfloat16",
+    "chunk_size_feed_forward": 0,
+    "is_encoder_decoder": false,
+    "architectures": [
+        "LlamaForCausalLM"
+    ],
+    "id2label": {
+        "0": "LABEL_0",
+        "1": "LABEL_1"
+    },
+    "label2id": {
+        "LABEL_0": 0,
+        "LABEL_1": 1
+    },
+    "problem_type": null,
+    "_name_or_path": "HuggingFaceTB/SmolLM2-1.7B-Instruct",
+    "transformers_version": "5.1.0",
+    "model_type": "llama",
+    "transformers.js_config": {
+        "dtype": "q4",
+        "kv_cache_dtype": {
+            "q4f16": "float16",
+            "fp16": "float16"
+        },
+        "use_external_data_format": {
+            "model.onnx": true,
+            "model_fp16.onnx": true
+        }
+    },
+    "output_attentions": false
+}
