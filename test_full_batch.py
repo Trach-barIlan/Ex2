@@ -17,31 +17,18 @@ class AllowedTokensLogitsProcessor(LogitsProcessor):
         return scores
 
 
-EVAL_PROMPTS = [
-    # 10 Provided Prompts
-    "Explain why the sky looks blue during the day.",
-    "Give two advantages and two disadvantages of public transportation.",
-    "Write a short email asking a professor for an extension on an assignment.",
-    "Describe how to make a simple omelette.",
-    "What is the difference between supervised and unsupervised learning?",
-    "Summarize the story of Cinderella in three sentences.",
-    "Suggest three ways to reduce smartphone distraction while studying.",
-    "Explain what happens when water boils.",
-    "Give a polite refusal to an invitation to a party.",
-    "Turn the idea “practice makes progress” into advice for a student.",
-    
-    # 10 Custom Prompts
-    "Explain how a refrigerator keeps food cold.",
-    "Write a short haiku about the ocean.",
-    "What are the main differences between a crocodile and an alligator?",
-    "Give a brief overview of the plot of The Lord of the Rings.",
-    "How do you say 'thank you' in five different languages?",
-    "What are the primary responsibilities of a software engineer?",
-    "Describe the process of photosynthesis in plants.",
-    "Provide three tips for improving one's sleep schedule.",
-    "Write a 2-sentence description of a futuristic city.",
-    "Explain the concept of gravity to a five-year-old."
-]
+def load_prompts_from_file(path="benchmark.txt"):
+    """Load prompts from a text file (one prompt per line), stripping empty lines."""
+    prompts = []
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line:
+                    prompts.append(line)
+    except FileNotFoundError:
+        print(f"Warning: {path} not found — falling back to empty prompt list.", flush=True)
+    return prompts
 
 
 def main():
@@ -95,8 +82,13 @@ def main():
     if logits_processor is not None:
         generate_kwargs_finetuned["logits_processor"] = logits_processor
 
+    prompts = load_prompts_from_file("benchmark.txt")
+    if not prompts:
+        print("No prompts loaded from benchmark.txt — exiting.", flush=True)
+        return
+
     with open(args.output, "w", encoding="utf-8") as output_handle:
-        for index, prompt in enumerate(EVAL_PROMPTS, start=1):
+        for index, prompt in enumerate(prompts, start=1):
             print(f"\n[{index}/{len(EVAL_PROMPTS)}] Processing prompt: {prompt}", flush=True)
 
             messages = [{"role": "user", "content": prompt}]
