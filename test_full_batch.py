@@ -17,16 +17,37 @@ class AllowedTokensLogitsProcessor(LogitsProcessor):
         return scores
 
 
-def read_prompts(input_path):
-    with open(input_path, "r", encoding="utf-8") as file_handle:
-        return [line.strip() for line in file_handle if line.strip()]
+EVAL_PROMPTS = [
+    # 10 Provided Prompts
+    "Explain why the sky looks blue during the day.",
+    "Give two advantages and two disadvantages of public transportation.",
+    "Write a short email asking a professor for an extension on an assignment.",
+    "Describe how to make a simple omelette.",
+    "What is the difference between supervised and unsupervised learning?",
+    "Summarize the story of Cinderella in three sentences.",
+    "Suggest three ways to reduce smartphone distraction while studying.",
+    "Explain what happens when water boils.",
+    "Give a polite refusal to an invitation to a party.",
+    "Turn the idea “practice makes progress” into advice for a student.",
+    
+    # 10 Custom Prompts
+    "Explain how a refrigerator keeps food cold.",
+    "Write a short haiku about the ocean.",
+    "What are the main differences between a crocodile and an alligator?",
+    "Give a brief overview of the plot of The Lord of the Rings.",
+    "How do you say 'thank you' in five different languages?",
+    "What are the primary responsibilities of a software engineer?",
+    "Describe the process of photosynthesis in plants.",
+    "Provide three tips for improving one's sleep schedule.",
+    "Write a 2-sentence description of a futuristic city.",
+    "Explain the concept of gravity to a five-year-old."
+]
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Test Full Qwen LoRA Model on a batch of prompts")
-    parser.add_argument("--input", type=str, default="benchmark.txt", help="Text file with one prompt per line")
-    parser.add_argument("--output", type=str, default="responses.txt", help="Text file to write query/response pairs")
-    parser.add_argument("--constrain", action="store_true", help="Use constrained decoding to force only allowed Hebrew tokens")
+    parser = argparse.ArgumentParser(description="Evaluate Base vs Fine-Tuned Qwen LoRA Model")
+    parser.add_argument("--output", type=str, default="eval_outputs.jsonl", help="JSONL output file")
+    parser.add_argument("--constrain", action="store_true", help="Use constrained decoding for the fine-tuned model")
     args = parser.parse_args()
 
     base_model_id = "Qwen/Qwen2.5-7B-Instruct"
@@ -59,43 +80,57 @@ def main():
                 logits_processor = LogitsProcessorList(
                     [AllowedTokensLogitsProcessor(allowed_token_ids, model.config.vocab_size)]
                 )
-                print("✅ Constrained decoding enabled.", flush=True)
+                print("✅ Constrained decoding enabled for fine-tuned outputs.", flush=True)
         except FileNotFoundError:
             print("⚠️ hebrew_allowed_tokens_qwen.json not found. Running without constrained decoding.", flush=True)
 
-    prompts = read_prompts(args.input)
-    print(f"Loaded {len(prompts)} prompts from {args.input}.", flush=True)
-
-    generate_kwargs = {
+    generate_kwargs_base = {
         "max_new_tokens": 500,
         "do_sample": True,
         "temperature": 0.7,
         "top_p": 0.9,
     }
+
+    generate_kwargs_finetuned = generate_kwargs_base.copy()
     if logits_processor is not None:
-        generate_kwargs["logits_processor"] = logits_processor
+        generate_kwargs_finetuned["logits_processor"] = logits_processor
 
     with open(args.output, "w", encoding="utf-8") as output_handle:
-        for index, prompt in enumerate(prompts, start=1):
-            print(f"[{index}/{len(prompts)}] Processing prompt...", flush=True)
-            output_handle.write(f"Query: {prompt}\n")
+        for index, prompt in enumerate(EVAL_PROMPTS, start=1):
+            print(f"\n[{index}/{len(EVAL_PROMPTS)}] Processing prompt: {prompt}", flush=True)
 
             messages = [{"role": "user", "content": prompt}]
             text = tokenizer.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
             model_inputs = tokenizer([text], return_tensors="pt").to(model.device)
 
-            print(f"[{index}/{len(prompts)}] Generating response...", flush=True)
-            generated_ids = model.generate(**model_inputs, **generate_kwargs)
+            # Generate BASE model output (temporarily disable LoRA adapter)
+            print("   -> Generating BASE response...", flush=True)
+            with model.disable_adapter():
+                base_generated_ids = model.generate(**model_inputs, **generate_kwargs_base)
+                base_generated_ids = [
+                    output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, base_generated_ids)
+                ]
+                base_response = tokenizer.batch_decode(base_generated_ids, skip_special_tokens=True)[0]
 
-            generated_ids = [
-                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, generated_ids)
+            # Generate FINE-TUNED model output (LoRA adapter enabled automatically)
+            print("   -> Generating FINE-TUNED response...", flush=True)
+            finetuned_generated_ids = model.generate(**model_inputs, **generate_kwargs_finetuned)
+            finetuned_generated_ids = [
+                output_ids[len(input_ids):] for input_ids, output_ids in zip(model_inputs.input_ids, finetuned_generated_ids)
             ]
+            finetuned_response = tokenizer.batch_decode(finetuned_generated_ids, skip_special_tokens=True)[0]
 
-            response = tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[0]
-            output_handle.write(f"Response: {response}\n\n")
+            # Save to JSONL
+            result = {
+                "prompt": prompt,
+                "base_output": base_response.strip(),
+                "finetuned_output": finetuned_response.strip(),
+                "notes": ""
+            }
+            output_handle.write(json.dumps(result, ensure_ascii=False) + "\n")
             output_handle.flush()
 
-    print(f"Done. Wrote responses to {args.output}", flush=True)
+    print(f"\n✅ Done. Wrote evaluation results to {args.output}", flush=True)
 
 
 if __name__ == "__main__":
